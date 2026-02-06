@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import '../services/sound_manager.dart';
 
 /// Haptic feedback utilities
 class HapticUtils {
@@ -39,28 +41,67 @@ class HapticUtils {
   }
 }
 
-/// Sound effect types (hooks for future audio implementation)
+/// Sound effect types
 enum SoundEffect {
   tileDrop,
   tileMerge,
   buttonClick,
   gameOver,
+  levelUp,
   newHighScore,
   comboAchieved,
 }
 
-/// Sound utilities (hooks for future implementation)
+/// Sound utilities - Production-ready implementation
 class SoundUtils {
   const SoundUtils._();
 
-  /// Play sound effect (hook for future implementation)
+  /// Play sound effect
   static void play(SoundEffect effect) {
-    // TODO: Implement sound playback when audio assets are added
-    // Example: AudioPlayer.play('assets/sounds/${effect.name}.mp3');
+    final soundManager = SoundManager.instance;
+
+    switch (effect) {
+      case SoundEffect.tileMerge:
+      case SoundEffect.levelUp:
+      case SoundEffect.comboAchieved:
+        debugPrint('[SoundUtils] Playing tileMerge for $effect');
+        soundManager.playSoundEffect('tileMerge');
+        break;
+      case SoundEffect.gameOver:
+      case SoundEffect.newHighScore:
+        debugPrint('[SoundUtils] Playing gameOver for $effect');
+        soundManager.playSoundEffect('gameOver');
+        break;
+      case SoundEffect.tileDrop:
+      case SoundEffect.buttonClick:
+        debugPrint('[SoundUtils] Skipping $effect - no audio file');
+        // These sounds don't have audio files yet, skip silently
+        break;
+    }
   }
 
   /// Stop all sounds
   static void stopAll() {
-    // TODO: Implement when audio is added
+    SoundManager.instance.stopAll();
+  }
+
+  /// Start background music
+  static void startMusic() {
+    SoundManager.instance.startMusic();
+  }
+
+  /// Stop background music
+  static void stopMusic() {
+    SoundManager.instance.stopMusic();
+  }
+
+  /// Pause background music
+  static void pauseMusic() {
+    SoundManager.instance.pauseMusic();
+  }
+
+  /// Resume background music
+  static void resumeMusic() {
+    SoundManager.instance.resumeMusic();
   }
 }

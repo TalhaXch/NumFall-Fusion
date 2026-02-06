@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/repositories/game_repository.dart';
+import '../core/services/sound_manager.dart';
 
 /// Provider for SharedPreferences instance (initialized in main.dart)
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -93,6 +94,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setSoundEnabled(bool enabled) async {
     state = state.copyWith(soundEnabled: enabled);
     await _repository.setSoundEnabled(enabled);
+    // Sync with sound manager
+    SoundManager.instance.setSoundEnabled(enabled);
   }
 
   Future<void> setHapticsEnabled(bool enabled) async {
@@ -103,6 +106,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setMusicEnabled(bool enabled) async {
     state = state.copyWith(musicEnabled: enabled);
     await _repository.setMusicEnabled(enabled);
+    // Sync with sound manager
+    SoundManager.instance.setMusicEnabled(enabled);
   }
 }
 

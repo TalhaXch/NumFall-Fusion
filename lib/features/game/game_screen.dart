@@ -28,6 +28,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
   DateTime? _lastFrameTime;
   Size? _boardSize;
   int _highScore = 0;
+  int _lastScore = 0; // Track score for level-up detection
+
+  // Level-up thresholds (every 100 points)
+  static const int _levelUpInterval = 100;
 
   @override
   void initState() {
@@ -86,6 +90,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
     // Start game
     ref.read(gameStateProvider.notifier).startGame();
     _ticker.start();
+
+    // Start background music
+    SoundUtils.startMusic();
   }
 
   void _onTick(Duration elapsed) {
@@ -101,6 +108,22 @@ class _GameScreenState extends ConsumerState<GameScreen>
     // Check for game state changes
     final gameState = ref.read(gameStateProvider);
 
+    // Check for level up (score crossed a milestone)
+    if (gameState.score > _lastScore) {
+      final lastLevel = _lastScore ~/ _levelUpInterval;
+      final currentLevel = gameState.score ~/ _levelUpInterval;
+
+      if (currentLevel > lastLevel) {
+        // Level up achieved!
+        if (mounted && ref.read(settingsProvider).hapticsEnabled) {
+          HapticUtils.success();
+        }
+        SoundUtils.play(SoundEffect.levelUp);
+      }
+
+      _lastScore = gameState.score;
+    }
+
     if (gameState.isGameOver) {
       _ticker.stop();
       _handleGameOver();
@@ -110,6 +133,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
   Future<void> _handleGameOver() async {
     final gameState = ref.read(gameStateProvider);
     final repo = await GameRepository.getInstance();
+
+    // Stop background music
+    SoundUtils.stopMusic();
 
     // Save high score
     final isNewHighScore = await repo.saveHighScore(gameState.score);
@@ -146,6 +172,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
     _ticker.stop();
     ref.read(gameStateProvider.notifier).pauseGame();
 
+    // Pause background music
+    SoundUtils.pauseMusic();
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -156,10 +185,14 @@ class _GameScreenState extends ConsumerState<GameScreen>
               ref.read(gameStateProvider.notifier).resumeGame();
               _lastFrameTime = DateTime.now();
               _ticker.start();
+              // Resume background music
+              SoundUtils.resumeMusic();
             },
             onQuit: () {
               Navigator.of(context).pop();
               Navigator.of(context).pop();
+              // Stop music when quitting
+              SoundUtils.stopMusic();
             },
           ),
     );
@@ -168,6 +201,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
   @override
   void dispose() {
     _ticker.dispose();
+    // Stop music when leaving screen
+    SoundUtils.stopMusic();
     super.dispose();
   }
 
